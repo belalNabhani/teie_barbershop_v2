@@ -31,6 +31,7 @@ const services: ServiceCategory[] = [
     icon: <UserCircle className="w-8 h-8" strokeWidth={1.5} />,
     items: [
       { name: "Skjegg trim", price: "400 kr" },
+      { name: "Skjegg trim med maskin", price: "250 kr" },
     ],
   },
   {
@@ -74,15 +75,15 @@ const services: ServiceCategory[] = [
 
 const Services = () => {
   return (
-    <section id="tjenester" className="py-24 bg-card">
+    <section id="tjenester" className="py-24 bg-primary text-primary-foreground">
       <div className="container mx-auto px-6">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <h2 className="font-display text-4xl md:text-5xl font-semibold text-foreground mb-4">
+          <h2 className="font-display text-4xl md:text-5xl font-semibold mb-4">
             Tjenester & Priser
           </h2>
-          <div className="decorative-line mb-6" />
-          <p className="font-body text-muted-foreground max-w-xl mx-auto">
+          <div className="w-20 h-0.5 bg-accent mx-auto mb-6" />
+          <p className="font-body text-primary-foreground/80 max-w-xl mx-auto">
             Vi tilbyr et bredt utvalg av tjenester. Få klassisk hårklipp og skjegg trim.
           </p>
         </div>
@@ -92,7 +93,7 @@ const Services = () => {
           {services.map((service) => (
             <div
               key={service.title}
-              className="bg-background p-8 border border-border hover:border-accent/50 transition-all duration-300 group"
+              className="bg-primary-foreground/5 border border-primary-foreground/10 p-8 hover:bg-primary-foreground/10 transition-all duration-300 group"
             >
               {/* Icon */}
               <div className="text-accent mb-6 group-hover:scale-110 transition-transform duration-300">
@@ -100,12 +101,12 @@ const Services = () => {
               </div>
 
               {/* Title */}
-              <h3 className="font-display text-2xl font-semibold text-foreground mb-3">
+              <h3 className="font-display text-2xl font-semibold mb-3">
                 {service.title}
               </h3>
 
               {/* Description */}
-              <p className="font-body text-sm text-muted-foreground mb-6">
+              <p className="font-body text-sm text-primary-foreground/80 mb-6">
                 {service.description}
               </p>
 
@@ -115,9 +116,9 @@ const Services = () => {
                   {service.items.map((item) => (
                     <li
                       key={item.name}
-                      className="flex justify-between items-center font-body text-sm border-b border-border/50 pb-2"
+                      className="flex justify-between items-center font-body text-sm border-b border-primary-foreground/20 pb-2"
                     >
-                      <span className="text-foreground">{item.name}</span>
+                      <span className="text-primary-foreground">{item.name}</span>
                       <span className="text-accent font-medium">{item.price}</span>
                     </li>
                   ))}
@@ -126,7 +127,7 @@ const Services = () => {
 
               {/* Gavekort special message */}
               {service.title === "Gavekort" && (
-                <p className="font-body text-sm text-muted-foreground italic">
+                <p className="font-body text-sm text-primary-foreground/80 italic">
                   Kontakt oss for å kjøpe gavekort
                 </p>
               )}
