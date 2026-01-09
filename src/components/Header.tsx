@@ -18,7 +18,7 @@ const Header = () => {
           {/* Logo placeholder - will be replaced with actual logo */}
           <a href="#" className="flex items-center gap-3">
             <span className="font-display text-xl md:text-2xl font-semibold text-foreground tracking-wide">
-              Teie Barber Shop
+              Teie Barbershop
             </span>
           </a>
 

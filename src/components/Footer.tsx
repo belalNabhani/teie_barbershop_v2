@@ -11,7 +11,7 @@ const Footer = () => {
           <div className="flex items-center gap-3 mb-6">
             <Scissors className="w-6 h-6 text-accent rotate-45" strokeWidth={1.5} />
             <span className="font-display text-xl font-semibold text-foreground">
-              Teie Barber Shop
+              Teie Barbershop
             </span>
           </div>
 
@@ -100,7 +100,7 @@ const Footer = () => {
 
           {/* Copyright */}
           <p className="font-body text-sm text-muted-foreground">
-            © {currentYear} Teie Barber Shop. Alle rettigheter reservert.
+            © {currentYear} Teie Barbershop. Alle rettigheter reservert.
           </p>
         </div>
       </div>

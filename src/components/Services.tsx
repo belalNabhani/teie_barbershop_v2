@@ -1,8 +1,22 @@
+import { useState, useEffect } from "react";
 import { Scissors, UserCircle, Droplets, Gift, Sparkles, Baby } from "lucide-react";
+import { fetchGoogleSheet } from "@/lib/googleSheets";
 
 interface ServiceItem {
   name: string;
   price: string;
+}
+
+interface Category {
+  name: string;
+  description: string;
+  icon: string;
+}
+
+interface Service {
+  name: string;
+  price: string;
+  categoryName: string;
 }
 
 interface ServiceCategory {
@@ -12,7 +26,23 @@ interface ServiceCategory {
   items: ServiceItem[];
 }
 
-const services: ServiceCategory[] = [
+// Configuration - Replace with your Google Sheet ID and sheet names
+const GOOGLE_SHEET_ID = import.meta.env.VITE_GOOGLE_SHEET_ID || "";
+const SERVICES_SHEET_NAME = import.meta.env.VITE_SERVICES_SHEET_NAME || "services";
+const CATEGORIES_SHEET_NAME = import.meta.env.VITE_CATEGORIES_SHEET_NAME || "categories";
+
+// Icon mapping
+const iconMap: Record<string, React.ReactNode> = {
+  Scissors: <Scissors className="w-8 h-8" strokeWidth={1.5} />,
+  UserCircle: <UserCircle className="w-8 h-8" strokeWidth={1.5} />,
+  Droplets: <Droplets className="w-8 h-8" strokeWidth={1.5} />,
+  Gift: <Gift className="w-8 h-8" strokeWidth={1.5} />,
+  Sparkles: <Sparkles className="w-8 h-8" strokeWidth={1.5} />,
+  Baby: <Baby className="w-8 h-8" strokeWidth={1.5} />,
+};
+
+// Fallback services (used if Google Sheet fails or is not configured)
+const fallbackServices: ServiceCategory[] = [
   {
     title: "Herre Hårklipp",
     description: "Velg den beste stilen for hodeformen, og vi vil gi deg den perfekte klipp.",
@@ -73,7 +103,136 @@ const services: ServiceCategory[] = [
   },
 ];
 
+/**
+ * Parses Categories sheet data
+ * Expected structure: Category Name | Description | Icon
+ */
+function parseCategories(rows: string[][]): Map<string, Category> {
+  const categories = new Map<string, Category>();
+
+  if (rows.length === 0) return categories;
+
+  // Skip header row
+  const dataRows = rows.slice(1);
+
+  dataRows.forEach((row) => {
+    const [name, description, icon] = row.map(cell => (cell || "").trim());
+
+    if (name) {
+      categories.set(name, {
+        name,
+        description: description || "",
+        icon: icon || "Scissors",
+      });
+    }
+  });
+
+  return categories;
+}
+
+/**
+ * Parses Services sheet data
+ * Expected structure: Service Name | Price | Category Name
+ */
+function parseServices(rows: string[][]): Service[] {
+  const services: Service[] = [];
+
+  if (rows.length === 0) return services;
+
+  // Skip header row
+  const dataRows = rows.slice(1);
+
+  dataRows.forEach((row) => {
+    const [name, price, categoryName] = row.map(cell => (cell || "").trim());
+
+    if (name && price && categoryName) {
+      services.push({
+        name,
+        price,
+        categoryName,
+      });
+    }
+  });
+
+  return services;
+}
+
+/**
+ * Joins categories and services into ServiceCategory array
+ */
+function joinCategoriesAndServices(
+  categories: Map<string, Category>,
+  services: Service[]
+): ServiceCategory[] {
+  const categoryMap = new Map<string, ServiceCategory>();
+
+  // Create ServiceCategory entries from categories
+  categories.forEach((category) => {
+    const icon = iconMap[category.icon] || iconMap.Scissors;
+    categoryMap.set(category.name, {
+      title: category.name,
+      description: category.description,
+      icon,
+      items: [],
+    });
+  });
+
+  // Add services to their categories
+  services.forEach((service) => {
+    const category = categoryMap.get(service.categoryName);
+    if (category) {
+      category.items.push({
+        name: service.name,
+        price: service.price,
+      });
+    }
+  });
+
+  return Array.from(categoryMap.values());
+}
+
 const Services = () => {
+  const [services, setServices] = useState<ServiceCategory[]>(fallbackServices);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadServices = async () => {
+      // If no sheet ID is configured, use fallback
+      if (!GOOGLE_SHEET_ID) {
+        console.warn("Google Sheet ID not configured. Using fallback data.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch both sheets in parallel
+        const [categoriesRows, servicesRows] = await Promise.all([
+          fetchGoogleSheet(GOOGLE_SHEET_ID, CATEGORIES_SHEET_NAME),
+          fetchGoogleSheet(GOOGLE_SHEET_ID, SERVICES_SHEET_NAME),
+        ]);
+
+        // Parse and join
+        const categories = parseCategories(categoriesRows);
+        const servicesData = parseServices(servicesRows);
+        const joinedServices = joinCategoriesAndServices(categories, servicesData);
+
+        setServices(joinedServices);
+      } catch (err) {
+        console.error("Failed to load services from Google Sheet:", err);
+        setError("Kunne ikke laste tjenester. Viser standardliste.");
+        // Keep fallback services on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadServices();
+  }, []);
+
   return (
     <section id="tjenester" className="py-24 bg-primary text-primary-foreground">
       <div className="container mx-auto px-6">
@@ -86,11 +245,24 @@ const Services = () => {
           <p className="font-body text-primary-foreground/80 max-w-xl mx-auto">
             Vi tilbyr et bredt utvalg av tjenester. Få klassisk hårklipp og skjegg trim.
           </p>
+          {error && (
+            <p className="font-body text-sm text-accent mt-4">
+              {error}
+            </p>
+          )}
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <p className="font-body text-primary-foreground/80">Laster tjenester...</p>
+          </div>
+        )}
+
         {/* Services Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {services.map((service) => (
+        {!loading && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {services.map((service) => (
             <div
               key={service.title}
               className="bg-primary-foreground/5 border border-primary-foreground/10 p-8 hover:bg-primary-foreground/10 transition-all duration-300 group"
@@ -132,8 +304,9 @@ const Services = () => {
                 </p>
               )}
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
